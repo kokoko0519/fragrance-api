@@ -58,9 +58,11 @@ const DEFAULT_STATE = {
   batches: [],
   eventLogs: {},
   storageLogs: [],
+  completionLogs: [],
   photoLogs: [],
   pendingEvents: [],
-  calendarEvents: {}
+  calendarEvents: {},
+  pendingNotionSync: []
 };
 
 function json(res, status, body) {
@@ -116,9 +118,11 @@ function mergeClientState(serverState, clientState = {}) {
     batches: serverState.batches?.length ? serverState.batches : (clientState.batches || []),
     eventLogs: Object.keys(serverState.eventLogs || {}).length ? serverState.eventLogs : (clientState.eventLogs || {}),
     storageLogs: serverState.storageLogs?.length ? serverState.storageLogs : (clientState.storageLogs || []),
+    completionLogs: serverState.completionLogs?.length ? serverState.completionLogs : (clientState.syncCache?.completionLogs || clientState.completionLogs || []),
     photoLogs: serverState.photoLogs?.length ? serverState.photoLogs : (clientState.photoLogs || []),
     pendingEvents: serverState.pendingEvents?.length ? serverState.pendingEvents : (clientState.pendingEvents || []),
-    calendarEvents: Object.keys(serverState.calendarEvents || {}).length ? serverState.calendarEvents : (clientState.calendarEvents || {})
+    calendarEvents: Object.keys(serverState.calendarEvents || {}).length ? serverState.calendarEvents : (clientState.calendarEvents || {}),
+    pendingNotionSync: serverState.pendingNotionSync?.length ? serverState.pendingNotionSync : (clientState.pendingNotionSync || [])
   };
 }
 
@@ -155,12 +159,56 @@ function dateProp(value) {
   return Number.isNaN(date.getTime()) ? { date: null } : { date: { start: date.toISOString() } };
 }
 
+function normalizeOne(value, map, fallback = '') {
+  const text = String(value || '').trim();
+  return map[text] || fallback;
+}
+
+function normalizeBatchStatus(value) {
+  return normalizeOne(value, { planned: '未着手', '未着手': '未着手', in_progress: '進行中', '進行中': '進行中', completed: '完了', '完了': '完了', paused: '未着手', canceled: '未着手', hold: '未着手' }, '未着手');
+}
+
+function normalizeMethodName(value) {
+  return normalizeOne(value, { steam: '蒸留', steam_distillation: '水蒸気蒸留', tincture: 'チンキ', solvent: '溶媒抽出', solvent_extraction: '溶媒抽出', '蒸留': '蒸留', '水蒸気蒸留': '水蒸気蒸留', 'チンキ': 'チンキ', '溶媒抽出': '溶媒抽出', 'その他': 'その他' }, 'その他');
+}
+
+function normalizeSolventName(value) {
+  return normalizeOne(value, { ethanol: 'エタノール', 'エタノール': 'エタノール', water: '水', '水': '水', 'その他': 'その他' }, 'その他');
+}
+
+function normalizeStorageTemperature(value) {
+  return normalizeOne(value, { room: '常温', '常温': '常温', refrigerated: '冷蔵', '冷蔵': '冷蔵', frozen: '冷凍', '冷凍': '冷凍', 'その他': 'その他' }, 'その他');
+}
+
+function normalizeContainerType(value) {
+  return normalizeOne(value, { glass: 'ガラス瓶', amber: '遮光瓶', plastic: '樹脂容器', 'ガラス瓶': 'ガラス瓶', '遮光瓶': '遮光瓶', '樹脂容器': '樹脂容器', 'その他': 'その他' }, 'その他');
+}
+
+function normalizeSealedState(value) {
+  return normalizeOne(value, { sealed: '密閉', '密閉': '密閉', semi_sealed: '半密閉', '半密閉': '半密閉', open: '開放', '開放': '開放' }, '密閉');
+}
+
+function normalizeCommercialDirection(value) {
+  return normalizeOne(value, { product: '商品候補', '商品候補': '商品候補', material: '素材販売向き', '素材販売向き': '素材販売向き', hold: '保留', '保留': '保留' }, '保留');
+}
+
+function normalizeStepLogStatus(value, abnormalityFlag = false) {
+  if (abnormalityFlag === true || String(abnormalityFlag).trim() === 'あり' || String(abnormalityFlag).trim() === 'true') return '異常';
+  return normalizeOne(value, { record: '記録', '記録': '記録', completed: '完了', '完了': '完了', abnormal: '異常', '異常': '異常' }, '記録');
+}
+
+function normalizeEventType(value) {
+  return normalizeOne(value, { point: 'point', duration: 'duration', other: 'other' }, 'other');
+}
+
 function notionConfig() {
   return {
     token: process.env.NOTION_TOKEN || '',
     batchesDatabaseId: process.env.NOTION_BATCHES_DATABASE_ID || '',
     stepLogsDatabaseId: process.env.NOTION_STEP_LOGS_DATABASE_ID || '',
-    completionLogsDatabaseId: process.env.NOTION_COMPLETION_LOGS_DATABASE_ID || ''
+    completionLogsDatabaseId: process.env.NOTION_COMPLETION_LOGS_DATABASE_ID || '',
+    perfumeDatabaseId: process.env.NOTION_PERFUME_DATABASE_ID || '',
+    aromaDatabaseId: process.env.NOTION_AROMA_DATABASE_ID || ''
   };
 }
 
@@ -258,37 +306,39 @@ async function appendPhotosToPage(pageId, photos, context) {
 }
 
 function batchProperties(batch) {
+  batch = { ...batch, status: normalizeBatchStatus(batch.status || '進行中') };
   return {
     'Batch ID': titleProp(batch.batchId),
     'Status': statusProp(batch.status || '進行中'),
     'Material Name': richTextProp(batch.materialName),
-    'Method Name': selectProp(batch.methodName || batch.methodId),
-    'Solvent Name': selectProp(batch.solventName),
+    'Method Name': selectProp(normalizeMethodName(batch.methodName || batch.methodId)),
+    'Solvent Name': selectProp(normalizeSolventName(batch.solventName)),
     'Ratio': richTextProp(batch.ratio),
-    'Start Date Time': dateProp(batch.selectedStartDateTime),
+    'Start Date Time': dateProp(batch.selectedStartDateTime || batch.startDateTime),
     'Completed At': dateProp(batch.completedAt),
     'Operator': richTextProp(batch.operator),
     'Comparison Group ID': richTextProp(batch.comparisonGroupId || batch.compareGroupId),
     'Comparison Group Name': richTextProp(batch.comparisonGroupName),
-    'Storage Temperature': selectProp(batch.storageTemperature),
+    'Storage Temperature': selectProp(normalizeStorageTemperature(batch.storageTemperature)),
     'Storage Location': richTextProp(batch.storageLocation),
-    'Container Type': selectProp(batch.containerType),
-    'Sealed State': selectProp(batch.sealedState),
+    'Container Type': selectProp(normalizeContainerType(batch.containerType)),
+    'Sealed State': selectProp(normalizeSealedState(batch.sealedState)),
     'Light Shielded': checkboxProp(batch.lightShielded),
     'Result Summary': richTextProp(batch.resultSummary),
     'Series Candidate': richTextProp(batch.seriesCandidate),
     'Product Candidate': richTextProp(batch.productCandidate),
-    'Commercial Direction': selectProp(batch.commercialDirection)
+    'Commercial Direction': selectProp(normalizeCommercialDirection(batch.commercialDirection))
   };
 }
 
 function stepLogProperties(row) {
+  row = { ...row, status: normalizeStepLogStatus(row.status, row.abnormalityFlag) };
   return {
     'Log ID': titleProp(row.logId),
     'Batch ID': richTextProp(row.batchId),
     'Step ID': richTextProp(row.stepId),
     'Step Title': richTextProp(row.stepTitle),
-    'Event Type': selectProp(row.eventType || 'point'),
+    'Event Type': selectProp(normalizeEventType(row.eventType)),
     'Scheduled At': dateProp(row.scheduledAt),
     'Logged At': dateProp(row.loggedAt),
     'Operator': richTextProp(row.operator),
@@ -325,7 +375,7 @@ function completionProperties(row) {
     'Product Candidate': richTextProp(row.productCandidate),
     'Fit Score': richTextProp(row.fitScore),
     'Fit Memo': richTextProp(row.fitMemo),
-    'Commercial Direction': selectProp(row.commercialDirection),
+    'Commercial Direction': selectProp(normalizeCommercialDirection(row.commercialDirection)),
     'Final Score': richTextProp(row.finalScore),
     'Issue Summary': richTextProp(row.issueSummary),
     'Next Improvement': richTextProp(row.nextImprovement),
@@ -343,6 +393,85 @@ async function createNotionPage(databaseId, properties) {
       properties
     })
   });
+}
+
+async function queryNotionDatabase(databaseId, body = {}) {
+  if (!databaseId) return { results: [] };
+  return notionFetch(`/databases/${databaseId}/query`, {
+    method: 'POST',
+    body: JSON.stringify({ page_size: 100, ...body })
+  });
+}
+
+async function findNotionPageByBatchId(batchId) {
+  const config = notionConfig();
+  if (!config.token || !config.batchesDatabaseId || !batchId) return null;
+  const response = await queryNotionDatabase(config.batchesDatabaseId, {
+    filter: { property: 'Batch ID', title: { equals: String(batchId) } }
+  });
+  return response.results?.[0] || null;
+}
+
+async function updateNotionPage(pageId, properties) {
+  return notionFetch(`/pages/${pageId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ properties })
+  });
+}
+
+async function updateBatchCompletionInNotion(row) {
+  const page = await findNotionPageByBatchId(row.batchId);
+  if (!page?.id) return { ok: false, notFound: true, error: 'Batches DBに対象Batch IDが見つかりません' };
+  const updated = await updateNotionPage(page.id, {
+    'Status': statusProp('完了'),
+    'Completed At': dateProp(row.completedAt),
+    'Result Summary': richTextProp(row.resultSummary),
+    'Series Candidate': richTextProp(row.seriesCandidate),
+    'Product Candidate': richTextProp(row.productCandidate),
+    'Commercial Direction': selectProp(normalizeCommercialDirection(row.commercialDirection))
+  });
+  return { ok: true, pageId: updated.id || page.id };
+}
+
+function enqueueNotionFailure(state, type, payload, error) {
+  const item = {
+    id: `notion-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    type,
+    payload,
+    error: error?.message || String(error || ''),
+    createdAt: new Date().toISOString(),
+    retryCount: 0
+  };
+  state.pendingNotionSync = [item, ...(state.pendingNotionSync || [])];
+  return item;
+}
+
+async function sendNotionItem(item) {
+  const config = notionConfig();
+  if (!config.token) throw new Error('NOTION_TOKEN が未設定です');
+  if (item.type === 'batch') return createNotionPage(config.batchesDatabaseId, batchProperties(item.payload));
+  if (item.type === 'stepLog') return createNotionPage(config.stepLogsDatabaseId, stepLogProperties(item.payload));
+  if (item.type === 'completion') return createNotionPage(config.completionLogsDatabaseId, completionProperties(item.payload));
+  if (item.type === 'batchUpdate') return updateBatchCompletionInNotion(item.payload);
+  throw new Error(`unknown pending notion type: ${item.type}`);
+}
+
+async function retryPendingNotionSync(state) {
+  const pending = [...(state.pendingNotionSync || [])].reverse();
+  const failed = [];
+  const results = [];
+  for (const item of pending) {
+    try {
+      const result = await sendNotionItem(item);
+      results.push({ id: item.id, ok: true, result });
+    } catch (error) {
+      failed.unshift({ ...item, retryCount: Number(item.retryCount || 0) + 1, error: error.message || String(error) });
+      results.push({ id: item.id, ok: false, error: error.message || String(error) });
+    }
+  }
+  state.pendingNotionSync = failed;
+  await saveState(state);
+  return { ok: true, before: pending.length, after: failed.length, results };
 }
 
 function computeHomeStats(state) {
@@ -396,6 +525,37 @@ function filterBatches(state, filters = {}) {
   });
 }
 
+function scoreCandidate(item = {}) {
+  const numeric = Number(String(item.fitScore || item.commercialPotential || '').replace(/[^\d.-]/g, ''));
+  if (Number.isFinite(numeric)) return numeric;
+  const text = `${item.fitScore || ''} ${item.commercialPotential || ''}`;
+  if (/高|A/i.test(text)) return 5;
+  if (/中|B/i.test(text)) return 4;
+  return 0;
+}
+
+function extractedMaterialCandidates(state) {
+  const byBatch = new Map((state.batches || []).map((batch) => [batch.batchId, batch]));
+  const rows = [
+    ...(state.completionLogs || []),
+    ...(state.batches || []).filter((batch) => batch.completedAt || batch.status === '完了')
+  ];
+  return rows
+    .map((row) => ({ ...(byBatch.get(row.batchId) || {}), ...row }))
+    .filter((row) => ['商品候補', '素材販売向き'].includes(normalizeCommercialDirection(row.commercialDirection)) || scoreCandidate(row) >= 4)
+    .map((row) => ({
+      batchId: row.batchId,
+      finalAroma: row.finalAroma,
+      luxuryFeel: row.luxuryFeel,
+      memorability: row.memorability,
+      reproducibilityEstimate: row.reproducibilityEstimate,
+      commercialDirection: normalizeCommercialDirection(row.commercialDirection),
+      seriesCandidate: row.seriesCandidate,
+      productCandidate: row.productCandidate,
+      nextImprovement: row.nextImprovement
+    }));
+}
+
 async function handleMessage(message) {
   let state = mergeClientState(await readState(), message.clientState || {});
   const payload = message.payload || {};
@@ -414,6 +574,23 @@ async function handleMessage(message) {
     case 'GET_BATCHES':
       return { ok: true, items: filterBatches(state, payload) };
 
+    case 'GET_EXTRACTED_MATERIAL_CANDIDATES':
+      return { ok: true, items: extractedMaterialCandidates(state) };
+
+    case 'GET_PERFUME_TRIAL_INFO':
+      return {
+        ok: true,
+        perfumeDatabaseConfigured: Boolean(config.perfumeDatabaseId),
+        aromaDatabaseConfigured: Boolean(config.aromaDatabaseId),
+        items: []
+      };
+
+    case 'GET_NOTION_SYNC_STATUS':
+      return { ok: true, count: (state.pendingNotionSync || []).length, items: state.pendingNotionSync || [] };
+
+    case 'RETRY_NOTION_SYNC':
+      return retryPendingNotionSync(state);
+
     case 'TEST_NOTION_SYNC':
       if (!config.token) return { ok: false, error: 'NOTION_TOKEN が未設定です' };
       return { ok: true, enabled: true };
@@ -428,7 +605,12 @@ async function handleMessage(message) {
       ];
       let notion = { skipped: true };
       if (config.token && config.batchesDatabaseId) {
-        notion = await createNotionPage(config.batchesDatabaseId, batchProperties(batch));
+        try {
+          notion = await createNotionPage(config.batchesDatabaseId, batchProperties(batch));
+        } catch (error) {
+          enqueueNotionFailure(state, 'batch', batch, error);
+          notion = { ok: false, error: error.message || String(error), queued: true };
+        }
       }
       await saveState(state);
       return {
@@ -476,10 +658,15 @@ async function handleMessage(message) {
       let photoCount = 0;
       let notion = { skipped: true };
       if (config.token && config.stepLogsDatabaseId) {
-        notion = await createNotionPage(config.stepLogsDatabaseId, stepLogProperties(row));
-        if (notion.id) {
-          const uploaded = await appendPhotosToPage(notion.id, payload.photos || [], row);
-          photoCount = uploaded.length;
+        try {
+          notion = await createNotionPage(config.stepLogsDatabaseId, stepLogProperties(row));
+          if (notion.id) {
+            const uploaded = await appendPhotosToPage(notion.id, payload.photos || [], row);
+            photoCount = uploaded.length;
+          }
+        } catch (error) {
+          enqueueNotionFailure(state, 'stepLog', row, error);
+          notion = { ok: false, error: error.message || String(error), queued: true };
         }
       }
       await saveState(state);
@@ -505,10 +692,15 @@ async function handleMessage(message) {
           memo: row.memo || row.reason || '',
           eventId: ''
         };
-        notion = await createNotionPage(config.stepLogsDatabaseId, stepLogProperties(notionRow));
-        if (notion.id) {
-          const uploaded = await appendPhotosToPage(notion.id, payload.photos || [], notionRow);
-          photoCount = uploaded.length;
+        try {
+          notion = await createNotionPage(config.stepLogsDatabaseId, stepLogProperties(notionRow));
+          if (notion.id) {
+            const uploaded = await appendPhotosToPage(notion.id, payload.photos || [], notionRow);
+            photoCount = uploaded.length;
+          }
+        } catch (error) {
+          enqueueNotionFailure(state, 'stepLog', notionRow, error);
+          notion = { ok: false, error: error.message || String(error), queued: true };
         }
       }
       await saveState(state);
@@ -518,18 +710,34 @@ async function handleMessage(message) {
     case 'SUBMIT_COMPLETION': {
       const completionId = uid('CMP');
       const row = { ...payload, completionId, completedAt: payload.completedAt || new Date().toISOString() };
+      state.completionLogs = [row, ...(state.completionLogs || [])];
       state.batches = (state.batches || []).map((batch) => batch.batchId === payload.batchId ? { ...batch, ...payload, status: '完了', completedAt: row.completedAt, updatedAt: new Date().toISOString() } : batch);
       let photoCount = 0;
       let notion = { skipped: true };
+      let batchUpdate = { skipped: true };
       if (config.token && config.completionLogsDatabaseId) {
-        notion = await createNotionPage(config.completionLogsDatabaseId, completionProperties(row));
-        if (notion.id) {
-          const uploaded = await appendPhotosToPage(notion.id, payload.photos || [], row);
-          photoCount = uploaded.length;
+        try {
+          notion = await createNotionPage(config.completionLogsDatabaseId, completionProperties(row));
+          if (notion.id) {
+            const uploaded = await appendPhotosToPage(notion.id, payload.photos || [], row);
+            photoCount = uploaded.length;
+          }
+        } catch (error) {
+          enqueueNotionFailure(state, 'completion', row, error);
+          notion = { ok: false, error: error.message || String(error), queued: true };
+        }
+        try {
+          batchUpdate = await updateBatchCompletionInNotion(row);
+          if (batchUpdate?.notFound) {
+            enqueueNotionFailure(state, 'batchUpdate', row, new Error(batchUpdate.error));
+          }
+        } catch (error) {
+          enqueueNotionFailure(state, 'batchUpdate', row, error);
+          batchUpdate = { ok: false, error: error.message || String(error), queued: true };
         }
       }
       await saveState(state);
-      return { ok: true, completionId, photoCount, sheetResult: { ok: false, skipped: true }, notion, statePatch: state };
+      return { ok: true, completionId, photoCount, sheetResult: { ok: false, skipped: true }, notion, batchUpdate, warning: batchUpdate?.error || '', statePatch: state };
     }
 
     default:
