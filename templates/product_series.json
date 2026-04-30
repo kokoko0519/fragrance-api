@@ -1,0 +1,20 @@
+﻿{
+  "productSeries": [
+    {
+      "seriesId": "jade_fuji",
+      "seriesName": "翡翠富士",
+      "concept": "静かな高級感と澄明感",
+      "priceTier": "premium",
+      "status": "active",
+      "note": "和の余韻を重視"
+    },
+    {
+      "seriesId": "kyo_no_ka",
+      "seriesName": "京ノ香",
+      "concept": "日常に寄り添う和香",
+      "priceTier": "mid",
+      "status": "active",
+      "note": "再現性と量産性を重視"
+    }
+  ]
+}

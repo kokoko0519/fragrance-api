@@ -1,0 +1,35 @@
+﻿{
+  "storageProfiles": [
+    {
+      "profileId": "room_shielded_sealed",
+      "profileName": "常温・遮光・密閉",
+      "storageTemperature": "常温",
+      "storageLocation": "室内棚",
+      "containerType": "遮光瓶",
+      "lightShielded": true,
+      "sealedState": "密閉",
+      "storageMemo": "直射日光を避ける"
+    },
+    {
+      "profileId": "cool_dark_bottle",
+      "profileName": "冷暗所・遮光瓶",
+      "storageTemperature": "冷暗所",
+      "storageLocation": "冷暗所保管庫",
+      "containerType": "遮光瓶",
+      "lightShielded": true,
+      "sealedState": "密閉",
+      "storageMemo": "日次で外観確認"
+    },
+    {
+      "profileId": "cool_refrigerated_sealed",
+      "profileName": "冷蔵・密閉",
+      "storageTemperature": "冷蔵",
+      "storageLocation": "冷蔵庫",
+      "containerType": "ガラス瓶",
+      "lightShielded": true,
+      "sealedState": "密閉",
+      "storageMemo": "温度変化を避ける"
+    }
+  ],
+  "temperatureOptions": ["常温", "冷暗所", "冷蔵", "10℃", "15℃", "20℃", "25℃", "その他"]
+}
