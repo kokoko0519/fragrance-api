@@ -1,9 +1,0 @@
-﻿{
-  "materials": [
-    { "materialCode": "CHA", "materialName": "茶葉", "aliases": ["チャ", "茶"] },
-    { "materialCode": "KRM", "materialName": "クロモジ", "aliases": ["黒文字"] },
-    { "materialCode": "YZU", "materialName": "柚子果皮", "aliases": ["ユズ"] },
-    { "materialCode": "RSE", "materialName": "ローズ", "aliases": ["薔薇"] },
-    { "materialCode": "LAV", "materialName": "ラベンダー", "aliases": [] }
-  ]
-}

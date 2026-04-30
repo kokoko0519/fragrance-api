@@ -1,8 +1,0 @@
-﻿{
-  "methodCodes": {
-    "steam_distillation": "STM",
-    "tincture": "TNK",
-    "solvent_extraction": "SOL"
-  },
-  "defaultMaterialCode": "MAT"
-}
