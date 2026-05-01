@@ -379,6 +379,8 @@ function trialProperties(trial = {}) {
     'Total Amount': numberOrTextProp(trial.totalAmount),
     Unit: selectProp(trial.unit || 'g'),
     'Fragrance Load Percent': numberOrTextProp(trial.fragranceLoadPercent),
+    'Fragrance Amount': numberOrTextProp(trial.fragranceAmount),
+    'Base Amount': numberOrTextProp(trial.baseAmount),
     'Alcohol Amount': numberOrTextProp(trial.alcoholAmount),
     'Water Amount': numberOrTextProp(trial.waterAmount),
     'Maturation Start Date': dateProp(trial.maturationStartDate),
