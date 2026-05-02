@@ -29,6 +29,7 @@ await loadDotEnv();
 
 const PORT = Number(process.env.PORT || 8787);
 const NOTION_VERSION = process.env.NOTION_VERSION || '2022-06-28';
+const BUILD = 'notion-list-fix-2026-04-30';
 const DEFAULT_ALLOWED_ORIGINS = [
   'https://japanese-fragrance.jp',
   'https://www.japanese-fragrance.jp',
@@ -123,25 +124,57 @@ function mergeClientState(serverState, clientState = {}) {
   };
 }
 
+function parseNotionId(value = '') {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  let text = raw;
+  try {
+    text = decodeURIComponent(raw);
+  } catch (_error) {
+    // Keep the raw value if it is not URL-encoded.
+  }
+  const cleaned = text
+    .replace(/^collection:\/\//i, '')
+    .replaceAll('-', '');
+  const matches = cleaned.match(/[0-9a-fA-F]{32}/g);
+  return matches?.length ? matches[matches.length - 1].toLowerCase() : '';
+}
+
 function parseDatabaseId(value = '') {
-  const text = String(value || '').trim();
-  const match = text.match(/([0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
-  return match ? match[1].replaceAll('-', '') : text;
+  return parseNotionId(value);
 }
 
 function notionConfig(settings = {}) {
   const notion = settings.notion || {};
+  const rawBatchesDatabaseId = process.env.NOTION_BATCHES_DATABASE_ID || notion.batchesDatabaseId || '';
+  const rawStepLogsDatabaseId = process.env.NOTION_STEP_LOGS_DATABASE_ID || notion.stepLogsDatabaseId || '';
+  const rawCompletionLogsDatabaseId = process.env.NOTION_COMPLETION_LOGS_DATABASE_ID || notion.completionLogsDatabaseId || '';
+  const rawPerfumeDatabaseId = process.env.NOTION_PERFUME_DATABASE_ID || notion.perfumeDatabaseId || '';
+  const rawAromaDatabaseId = process.env.NOTION_AROMA_DATABASE_ID || notion.aromaDatabaseId || '';
+  const rawOwnedMaterialsDatabaseId = process.env.NOTION_OWNED_MATERIALS_DATABASE_ID || notion.ownedMaterialsDatabaseId || '';
+  const rawPerfumeTrialsDatabaseId = process.env.NOTION_PERFUME_TRIALS_DATABASE_ID || notion.perfumeTrialsDatabaseId || '';
+  const rawFormulaLinesDatabaseId = process.env.NOTION_FORMULA_LINES_DATABASE_ID || notion.formulaLinesDatabaseId || '';
+  const rawTrialReviewsDatabaseId = process.env.NOTION_TRIAL_REVIEWS_DATABASE_ID || notion.trialReviewsDatabaseId || '';
   return {
     token: process.env.NOTION_TOKEN || '',
-    batchesDatabaseId: parseDatabaseId(process.env.NOTION_BATCHES_DATABASE_ID || notion.batchesDatabaseId || ''),
-    stepLogsDatabaseId: parseDatabaseId(process.env.NOTION_STEP_LOGS_DATABASE_ID || notion.stepLogsDatabaseId || ''),
-    completionLogsDatabaseId: parseDatabaseId(process.env.NOTION_COMPLETION_LOGS_DATABASE_ID || notion.completionLogsDatabaseId || ''),
-    perfumeDatabaseId: parseDatabaseId(process.env.NOTION_PERFUME_DATABASE_ID || notion.perfumeDatabaseId || ''),
-    aromaDatabaseId: parseDatabaseId(process.env.NOTION_AROMA_DATABASE_ID || notion.aromaDatabaseId || ''),
-    ownedMaterialsDatabaseId: parseDatabaseId(process.env.NOTION_OWNED_MATERIALS_DATABASE_ID || notion.ownedMaterialsDatabaseId || ''),
-    perfumeTrialsDatabaseId: parseDatabaseId(process.env.NOTION_PERFUME_TRIALS_DATABASE_ID || notion.perfumeTrialsDatabaseId || ''),
-    formulaLinesDatabaseId: parseDatabaseId(process.env.NOTION_FORMULA_LINES_DATABASE_ID || notion.formulaLinesDatabaseId || ''),
-    trialReviewsDatabaseId: parseDatabaseId(process.env.NOTION_TRIAL_REVIEWS_DATABASE_ID || notion.trialReviewsDatabaseId || '')
+    rawBatchesDatabaseId,
+    rawStepLogsDatabaseId,
+    rawCompletionLogsDatabaseId,
+    rawPerfumeDatabaseId,
+    rawAromaDatabaseId,
+    rawOwnedMaterialsDatabaseId,
+    rawPerfumeTrialsDatabaseId,
+    rawFormulaLinesDatabaseId,
+    rawTrialReviewsDatabaseId,
+    batchesDatabaseId: parseDatabaseId(rawBatchesDatabaseId),
+    stepLogsDatabaseId: parseDatabaseId(rawStepLogsDatabaseId),
+    completionLogsDatabaseId: parseDatabaseId(rawCompletionLogsDatabaseId),
+    perfumeDatabaseId: parseDatabaseId(rawPerfumeDatabaseId),
+    aromaDatabaseId: parseDatabaseId(rawAromaDatabaseId),
+    ownedMaterialsDatabaseId: parseDatabaseId(rawOwnedMaterialsDatabaseId),
+    perfumeTrialsDatabaseId: parseDatabaseId(rawPerfumeTrialsDatabaseId),
+    formulaLinesDatabaseId: parseDatabaseId(rawFormulaLinesDatabaseId),
+    trialReviewsDatabaseId: parseDatabaseId(rawTrialReviewsDatabaseId)
   };
 }
 
@@ -228,27 +261,75 @@ function normalizeEventType(value) {
   return normalizeOne(value, { point: 'point', duration: 'duration', other: 'other' }, 'other');
 }
 
+function useNotionDataSourceApi() {
+  return NOTION_VERSION >= '2025-09-03';
+}
+
+function notionDebugEnabled() {
+  return process.env.DEBUG_NOTION === '1';
+}
+
+function debugNotion(label, details) {
+  if (!notionDebugEnabled()) return;
+  console.log(JSON.stringify({ at: new Date().toISOString(), label, ...details }));
+}
+
 async function notionFetch(path, options = {}) {
   const { token } = notionConfig();
   if (!token) throw new Error('NOTION_TOKEN が未設定です');
-  const res = await fetch(`https://api.notion.com/v1${path}`, {
-    ...options,
+  const url = `https://api.notion.com/v1${path}`;
+  const { debugLabel, ...fetchOptions } = options;
+  debugNotion(debugLabel || 'notionFetch', {
+    method: fetchOptions.method || 'GET',
+    url
+  });
+  const res = await fetch(url, {
+    ...fetchOptions,
     headers: {
       Authorization: `Bearer ${token}`,
       'Notion-Version': NOTION_VERSION,
       'Content-Type': 'application/json',
-      ...(options.headers || {})
+      ...(fetchOptions.headers || {})
     }
   });
-  if (!res.ok) throw new Error(`Notion API error ${res.status}: ${await res.text()}`);
+  debugNotion(debugLabel || 'notionFetch', { url, status: res.status });
+  if (!res.ok) {
+    const body = await res.text();
+    debugNotion(debugLabel || 'notionFetch', { url, status: res.status, errorBody: body });
+    throw new Error(`Notion API error ${res.status}: ${body}`);
+  }
   return res.json();
 }
 
 async function createNotionPage(databaseId, properties) {
-  if (!databaseId) throw new Error('Notion database ID が未設定です');
+  const parsedId = parseNotionId(databaseId);
+  if (!parsedId) throw new Error('Notion database ID が未設定です');
+  if (useNotionDataSourceApi()) {
+    let dataSourceId = parsedId;
+    try {
+      const database = await notionFetch(`/databases/${parsedId}`, {
+        method: 'GET',
+        debugLabel: 'retrieveDatabaseForCreate'
+      });
+      const firstDataSourceId = parseNotionId(database?.data_sources?.[0]?.id || '');
+      if (firstDataSourceId) dataSourceId = firstDataSourceId;
+    } catch (error) {
+      debugNotion('createPageDataSourceFallback', {
+        rawContainerId: databaseId,
+        parsedContainerId: parsedId,
+        error: error.message || String(error)
+      });
+    }
+    return notionFetch('/pages', {
+      method: 'POST',
+      body: JSON.stringify({ parent: { type: 'data_source_id', data_source_id: dataSourceId }, properties }),
+      debugLabel: 'createPageInDataSource'
+    });
+  }
   return notionFetch('/pages', {
     method: 'POST',
-    body: JSON.stringify({ parent: { database_id: databaseId }, properties })
+    body: JSON.stringify({ parent: { database_id: parsedId }, properties }),
+    debugLabel: 'createPageInDatabase'
   });
 }
 
@@ -260,10 +341,39 @@ async function updateNotionPage(pageId, properties) {
 }
 
 async function queryNotionDatabase(databaseId, body = {}) {
-  if (!databaseId) return { results: [] };
-  return notionFetch(`/databases/${databaseId}/query`, {
+  const parsedId = parseNotionId(databaseId);
+  if (!parsedId) return { results: [] };
+  if (useNotionDataSourceApi()) {
+    let dataSourceId = parsedId;
+    try {
+      const database = await notionFetch(`/databases/${parsedId}`, {
+        method: 'GET',
+        debugLabel: 'retrieveDatabaseForDataSource'
+      });
+      const firstDataSourceId = parseNotionId(database?.data_sources?.[0]?.id || '');
+      if (firstDataSourceId) dataSourceId = firstDataSourceId;
+      debugNotion('resolveDataSourceId', {
+        rawContainerId: databaseId,
+        parsedContainerId: parsedId,
+        parsedDataSourceId: dataSourceId
+      });
+    } catch (error) {
+      debugNotion('resolveDataSourceIdFallback', {
+        rawContainerId: databaseId,
+        parsedContainerId: parsedId,
+        error: error.message || String(error)
+      });
+    }
+    return notionFetch(`/data_sources/${dataSourceId}/query`, {
+      method: 'POST',
+      body: JSON.stringify({ page_size: 100, ...body }),
+      debugLabel: 'queryDataSource'
+    });
+  }
+  return notionFetch(`/databases/${parsedId}/query`, {
     method: 'POST',
-    body: JSON.stringify({ page_size: 100, ...body })
+    body: JSON.stringify({ page_size: 100, ...body }),
+    debugLabel: 'queryDatabase'
   });
 }
 
@@ -533,10 +643,30 @@ function matchesQuery(item, query, keys) {
   return keys.some((key) => String(item[key] || '').toLowerCase().includes(q));
 }
 
-async function listDatabaseItems(databaseId, mapper, query, keys) {
-  if (!databaseId) return { ok: true, notConfigured: true, items: [] };
-  const pages = await queryNotionDatabase(databaseId);
-  return { ok: true, items: (pages.results || []).map(mapper).filter((item) => matchesQuery(item, query, keys)) };
+async function listDatabaseItems(databaseId, mapper, query, keys, meta = {}) {
+  debugNotion('listDatabaseItems', {
+    messageType: meta.messageType || '',
+    rawDatabaseId: meta.rawDatabaseId || '',
+    parsedDatabaseId: databaseId || ''
+  });
+  if (!databaseId) {
+    return {
+      ok: false,
+      notConfigured: true,
+      error: 'Notion database ID is not configured or is not a valid Notion database ID.',
+      items: []
+    };
+  }
+  try {
+    const pages = await queryNotionDatabase(databaseId);
+    return { ok: true, items: (pages.results || []).map(mapper).filter((item) => matchesQuery(item, query, keys)) };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error.message || String(error),
+      items: []
+    };
+  }
 }
 
 function scoreCandidate(item = {}) {
@@ -718,20 +848,32 @@ async function handleMessage(message) {
       };
 
     case 'LIST_OWNED_MATERIALS': {
-      const res = await listDatabaseItems(config.ownedMaterialsDatabaseId, mapOwnedMaterialPage, payload.query, ['name', 'aromaCategory', 'aromaDescription', 'memo', 'safetyMemo']);
+      const res = await listDatabaseItems(config.ownedMaterialsDatabaseId, mapOwnedMaterialPage, payload.query, ['name', 'aromaCategory', 'aromaDescription', 'memo', 'safetyMemo'], {
+        messageType: 'LIST_OWNED_MATERIALS',
+        rawDatabaseId: config.rawOwnedMaterialsDatabaseId
+      });
       return { ...res, items: (res.items || []).filter((item) => !item.usability || item.usability === '試作使用可') };
     }
 
     case 'LIST_AROMA_DATABASE':
-      return listDatabaseItems(config.aromaDatabaseId, mapAromaPage, payload.query, ['name', 'aromaCategory', 'notePosition', 'aromaDescription', 'compatibility']);
+      return listDatabaseItems(config.aromaDatabaseId, mapAromaPage, payload.query, ['name', 'aromaCategory', 'notePosition', 'aromaDescription', 'compatibility'], {
+        messageType: 'LIST_AROMA_DATABASE',
+        rawDatabaseId: config.rawAromaDatabaseId
+      });
 
     case 'LIST_PERFUME_DATABASE':
-      return listDatabaseItems(config.perfumeDatabaseId, mapPerfumePage, payload.query, ['name', 'brand', 'fragranceFamily', 'keyMaterials', 'aromaDescription']);
+      return listDatabaseItems(config.perfumeDatabaseId, mapPerfumePage, payload.query, ['name', 'brand', 'fragranceFamily', 'keyMaterials', 'aromaDescription'], {
+        messageType: 'LIST_PERFUME_DATABASE',
+        rawDatabaseId: config.rawPerfumeDatabaseId
+      });
 
     case 'LIST_EXTRACTED_MATERIAL_CANDIDATES':
     case 'GET_EXTRACTED_MATERIAL_CANDIDATES': {
       if (config.token && config.completionLogsDatabaseId) {
-        const res = await listDatabaseItems(config.completionLogsDatabaseId, mapCompletionPage, payload.query, ['completionId', 'batchId', 'finalAroma', 'resultSummary', 'seriesCandidate', 'productCandidate']);
+        const res = await listDatabaseItems(config.completionLogsDatabaseId, mapCompletionPage, payload.query, ['completionId', 'batchId', 'finalAroma', 'resultSummary', 'seriesCandidate', 'productCandidate'], {
+          messageType: message.type,
+          rawDatabaseId: config.rawCompletionLogsDatabaseId
+        });
         return { ...res, items: (res.items || []).filter((item) => ['商品候補', '素材販売向き'].includes(normalizeCommercialDirection(item.commercialDirection)) || scoreCandidate(item) >= 4) };
       }
       return { ok: true, items: extractedMaterialCandidates(state) };
@@ -907,6 +1049,8 @@ createServer(async (req, res) => {
       json(res, 200, {
         ok: true,
         service: 'fragrance-workflow-api',
+        build: BUILD,
+        notionVersion: NOTION_VERSION,
         notionConfigured: Boolean(notionConfig().token),
         allowedOrigins: ALLOWED_ORIGINS,
         time: new Date().toISOString()
