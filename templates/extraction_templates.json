@@ -1,0 +1,3062 @@
+{
+  "methods": [
+    {
+      "methodId": "steam_distillation",
+      "methodCode": "STM",
+      "methodName": "水蒸気蒸留",
+      "usesWater": true,
+      "usesSolvent": false,
+      "defaultDurationMinutes": 240,
+      "requiredLogs": [
+        "温度",
+        "留出量",
+        "冷却状態",
+        "異臭"
+      ]
+    },
+    {
+      "methodId": "tincture",
+      "methodCode": "TNK",
+      "methodName": "チンキ",
+      "usesWater": false,
+      "usesSolvent": true,
+      "defaultDurationMinutes": 10080,
+      "requiredLogs": [
+        "色",
+        "沈殿",
+        "攪拌有無",
+        "香りの濃さ"
+      ]
+    },
+    {
+      "methodId": "solvent_extraction",
+      "methodCode": "SOL",
+      "methodName": "溶媒抽出",
+      "usesWater": false,
+      "usesSolvent": true,
+      "defaultDurationMinutes": 2880,
+      "requiredLogs": [
+        "濁り",
+        "残渣",
+        "溶媒状態",
+        "除去後状態"
+      ]
+    }
+  ],
+  "presets": {
+    "steam_distillation": [
+      {
+        "presetId": "stm_short",
+        "presetName": "小スケール短時間",
+        "description": "短時間の蒸留確認を重視",
+        "defaultRatio": null,
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 180
+        },
+        "allowedSolvents": [],
+        "defaultStorageProfile": "room_shielded_sealed",
+        "steps": [
+          {
+            "stepId": "prep",
+            "name": "原料準備",
+            "eventType": "point",
+            "offsetMinutes": -30,
+            "procedure": "原料を洗浄し粗裁断する",
+            "checkpoints": [
+              "異物除去",
+              "重量確認",
+              "ラベル一致",
+              "重量",
+              "外観",
+              "異常有無"
+            ],
+            "stepType": "material_prep",
+            "title": "原料準備",
+            "stepDescription": "抽出前に原料状態をそろえ、後工程のばらつきを減らす工程です。",
+            "instructions": [
+              "原料ラベル・ロット・採取日を確認し、対象バッチと一致することを確認する。",
+              "異物を除去し、必要な前処理（洗浄・裁断）を行う。",
+              "秤を調整して原料重量を測定し記録する。",
+              "外観を確認し、異常有無を記録する。"
+            ],
+            "normalSigns": [
+              "ラベル一致",
+              "異臭なし",
+              "外観が想定範囲"
+            ],
+            "abnormalSigns": [
+              "変色",
+              "異臭",
+              "異物混入",
+              "重量差過大"
+            ],
+            "cautionNotes": [
+              "濡れた器具を使わない",
+              "取り違え防止のため再確認する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "原料確認",
+              "原料重量",
+              "外観確認",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "原料確認・重量・外観が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "変色",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "distill_main",
+            "name": "蒸留本体",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "蒸留装置を立ち上げ抽出する",
+            "checkpoints": [
+              "加熱開始",
+              "初留確認",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "蒸留本体",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "mid_check",
+            "name": "中間確認",
+            "eventType": "point",
+            "offsetMinutes": 90,
+            "procedure": "留出状態と冷却を確認",
+            "checkpoints": [
+              "冷却水流量",
+              "異臭なし",
+              "色",
+              "香り",
+              "温度",
+              "異常有無"
+            ],
+            "stepType": "check",
+            "title": "中間確認",
+            "stepDescription": "抽出中の変化を観察し、異常の早期検出と条件比較に使う工程です。",
+            "instructions": [
+              "容器ラベルと対象バッチを確認する。",
+              "液色・濁り・沈殿を目視で確認し記録する。",
+              "香りと温度を確認し、前回との差を記録する。"
+            ],
+            "normalSigns": [
+              "軽い沈殿のみ",
+              "強い異臭なし",
+              "温度が想定範囲"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "急激な分離",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "確認条件を毎回そろえる",
+              "開栓時間を短くする"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "色",
+              "香り",
+              "温度",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "観察項目が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "recover",
+            "name": "回収",
+            "eventType": "point",
+            "offsetMinutes": 185,
+            "procedure": "留出液を回収し密栓",
+            "checkpoints": [
+              "回収量",
+              "容器ラベル",
+              "外観",
+              "異常有無"
+            ],
+            "stepType": "recovery",
+            "title": "回収",
+            "stepDescription": "抽出液を回収し、次工程へ引き渡せる状態にする工程です。",
+            "instructions": [
+              "回収容器ラベルと密閉状態を確認する。",
+              "回収量を測定して記録する。",
+              "外観と異常有無を記録する。"
+            ],
+            "normalSigns": [
+              "回収量が想定範囲",
+              "液漏れなし"
+            ],
+            "abnormalSigns": [
+              "回収量不足",
+              "液漏れ",
+              "急な変色"
+            ],
+            "cautionNotes": [
+              "回収容器の取り違えに注意"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "回収量",
+              "外観",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "回収量と異常有無が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": null,
+        "stirFrequency": null
+      },
+      {
+        "presetId": "stm_standard",
+        "presetName": "標準",
+        "description": "標準蒸留プロトコル",
+        "defaultRatio": null,
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 240
+        },
+        "allowedSolvents": [],
+        "defaultStorageProfile": "cool_dark_bottle",
+        "steps": [
+          {
+            "stepId": "prep",
+            "name": "原料準備",
+            "eventType": "point",
+            "offsetMinutes": -45,
+            "procedure": "原料の水分調整と裁断",
+            "checkpoints": [
+              "原料状態",
+              "重量再計量",
+              "ラベル一致",
+              "重量",
+              "外観",
+              "異常有無"
+            ],
+            "stepType": "material_prep",
+            "title": "原料準備",
+            "stepDescription": "抽出前に原料状態をそろえ、後工程のばらつきを減らす工程です。",
+            "instructions": [
+              "原料ラベル・ロット・採取日を確認し、対象バッチと一致することを確認する。",
+              "異物を除去し、必要な前処理（洗浄・裁断）を行う。",
+              "秤を調整して原料重量を測定し記録する。",
+              "外観を確認し、異常有無を記録する。"
+            ],
+            "normalSigns": [
+              "ラベル一致",
+              "異臭なし",
+              "外観が想定範囲"
+            ],
+            "abnormalSigns": [
+              "変色",
+              "異臭",
+              "異物混入",
+              "重量差過大"
+            ],
+            "cautionNotes": [
+              "濡れた器具を使わない",
+              "取り違え防止のため再確認する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "原料確認",
+              "原料重量",
+              "外観確認",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "原料確認・重量・外観が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "変色",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "distill_main",
+            "name": "蒸留本体",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "加熱と冷却を安定運転",
+            "checkpoints": [
+              "蒸気圧安定",
+              "留出開始",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "蒸留本体",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "mid_check1",
+            "name": "中間確認",
+            "eventType": "point",
+            "offsetMinutes": 120,
+            "procedure": "温度と冷却状態を確認",
+            "checkpoints": [
+              "目標温度",
+              "冷却正常",
+              "色",
+              "香り",
+              "温度",
+              "異常有無"
+            ],
+            "stepType": "check",
+            "title": "中間確認",
+            "stepDescription": "抽出中の変化を観察し、異常の早期検出と条件比較に使う工程です。",
+            "instructions": [
+              "容器ラベルと対象バッチを確認する。",
+              "液色・濁り・沈殿を目視で確認し記録する。",
+              "香りと温度を確認し、前回との差を記録する。"
+            ],
+            "normalSigns": [
+              "軽い沈殿のみ",
+              "強い異臭なし",
+              "温度が想定範囲"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "急激な分離",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "確認条件を毎回そろえる",
+              "開栓時間を短くする"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "色",
+              "香り",
+              "温度",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "観察項目が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "filter",
+            "name": "濾過",
+            "eventType": "point",
+            "offsetMinutes": 245,
+            "procedure": "回収液の粗濾過",
+            "checkpoints": [
+              "濁り",
+              "異臭なし",
+              "濾過完了有無",
+              "残渣",
+              "回収量"
+            ],
+            "stepType": "filtration",
+            "title": "濾過",
+            "stepDescription": "残渣を除去し、回収液の状態を一定化する工程です。",
+            "instructions": [
+              "ろ紙・器具・受器を準備し、ラベルを確認する。",
+              "濁りと残渣の状態を確認しながらろ過する。",
+              "ろ過完了後の回収量を測定し記録する。"
+            ],
+            "normalSigns": [
+              "ろ過後の濁りが減少",
+              "残渣量が想定範囲"
+            ],
+            "abnormalSigns": [
+              "強い濁り残り",
+              "ろ過停止",
+              "回収量急減"
+            ],
+            "cautionNotes": [
+              "ろ紙詰まり時は無理に圧をかけない"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "濾過完了有無",
+              "濁り",
+              "残渣",
+              "回収量"
+            ],
+            "optionalLogs": [
+              "異常有無",
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "濾過完了と回収量が記録済み"
+            ],
+            "abnormalityOptions": [
+              "白濁",
+              "沈殿過多",
+              "分離",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": {
+          "unit": "day",
+          "every": 1
+        },
+        "stirFrequency": null
+      },
+      {
+        "presetId": "stm_long_check",
+        "presetName": "長時間確認強化",
+        "description": "長時間運転と確認頻度を強化",
+        "defaultRatio": null,
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 360
+        },
+        "allowedSolvents": [],
+        "defaultStorageProfile": "cool_refrigerated_sealed",
+        "steps": [
+          {
+            "stepId": "prep",
+            "name": "原料準備",
+            "eventType": "point",
+            "offsetMinutes": -60,
+            "procedure": "原料の選別と裁断",
+            "checkpoints": [
+              "選別完了",
+              "重量一致",
+              "ラベル一致",
+              "重量",
+              "外観",
+              "異常有無"
+            ],
+            "stepType": "material_prep",
+            "title": "原料準備",
+            "stepDescription": "抽出前に原料状態をそろえ、後工程のばらつきを減らす工程です。",
+            "instructions": [
+              "原料ラベル・ロット・採取日を確認し、対象バッチと一致することを確認する。",
+              "異物を除去し、必要な前処理（洗浄・裁断）を行う。",
+              "秤を調整して原料重量を測定し記録する。",
+              "外観を確認し、異常有無を記録する。"
+            ],
+            "normalSigns": [
+              "ラベル一致",
+              "異臭なし",
+              "外観が想定範囲"
+            ],
+            "abnormalSigns": [
+              "変色",
+              "異臭",
+              "異物混入",
+              "重量差過大"
+            ],
+            "cautionNotes": [
+              "濡れた器具を使わない",
+              "取り違え防止のため再確認する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "原料確認",
+              "原料重量",
+              "外観確認",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "原料確認・重量・外観が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "変色",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "distill_main",
+            "name": "蒸留本体",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "長時間蒸留運転",
+            "checkpoints": [
+              "加熱安定",
+              "蒸気ライン確認",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "蒸留本体",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "mid_check1",
+            "name": "中間確認",
+            "eventType": "point",
+            "offsetMinutes": 120,
+            "procedure": "運転状態を記録",
+            "checkpoints": [
+              "温度",
+              "流量",
+              "色",
+              "香り",
+              "異常有無"
+            ],
+            "stepType": "check",
+            "title": "中間確認",
+            "stepDescription": "抽出中の変化を観察し、異常の早期検出と条件比較に使う工程です。",
+            "instructions": [
+              "容器ラベルと対象バッチを確認する。",
+              "液色・濁り・沈殿を目視で確認し記録する。",
+              "香りと温度を確認し、前回との差を記録する。"
+            ],
+            "normalSigns": [
+              "軽い沈殿のみ",
+              "強い異臭なし",
+              "温度が想定範囲"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "急激な分離",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "確認条件を毎回そろえる",
+              "開栓時間を短くする"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "色",
+              "香り",
+              "温度",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "観察項目が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "mid_check2",
+            "name": "中間確認",
+            "eventType": "point",
+            "offsetMinutes": 240,
+            "procedure": "冷却系と異臭の確認",
+            "checkpoints": [
+              "冷却正常",
+              "異臭なし",
+              "色",
+              "香り",
+              "温度",
+              "異常有無"
+            ],
+            "stepType": "check",
+            "title": "中間確認",
+            "stepDescription": "抽出中の変化を観察し、異常の早期検出と条件比較に使う工程です。",
+            "instructions": [
+              "容器ラベルと対象バッチを確認する。",
+              "液色・濁り・沈殿を目視で確認し記録する。",
+              "香りと温度を確認し、前回との差を記録する。"
+            ],
+            "normalSigns": [
+              "軽い沈殿のみ",
+              "強い異臭なし",
+              "温度が想定範囲"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "急激な分離",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "確認条件を毎回そろえる",
+              "開栓時間を短くする"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "色",
+              "香り",
+              "温度",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "観察項目が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "recover",
+            "name": "回収",
+            "eventType": "point",
+            "offsetMinutes": 365,
+            "procedure": "回収と保存処理",
+            "checkpoints": [
+              "回収量",
+              "保存容器",
+              "外観",
+              "異常有無"
+            ],
+            "stepType": "recovery",
+            "title": "回収",
+            "stepDescription": "抽出液を回収し、次工程へ引き渡せる状態にする工程です。",
+            "instructions": [
+              "回収容器ラベルと密閉状態を確認する。",
+              "回収量を測定して記録する。",
+              "外観と異常有無を記録する。"
+            ],
+            "normalSigns": [
+              "回収量が想定範囲",
+              "液漏れなし"
+            ],
+            "abnormalSigns": [
+              "回収量不足",
+              "液漏れ",
+              "急な変色"
+            ],
+            "cautionNotes": [
+              "回収容器の取り違えに注意"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "回収量",
+              "外観",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "回収量と異常有無が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": {
+          "unit": "day",
+          "every": 1
+        },
+        "stirFrequency": null
+      }
+    ],
+    "tincture": [
+      {
+        "presetId": "tnk_7d",
+        "presetName": "7日",
+        "description": "短期チンキ",
+        "defaultRatio": "1:5",
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 10080
+        },
+        "allowedSolvents": [
+          "ethanol",
+          "ethanol_water_mix",
+          "purified_water"
+        ],
+        "defaultStorageProfile": "cool_dark_bottle",
+        "steps": [
+          {
+            "stepId": "prep",
+            "name": "原料準備",
+            "eventType": "point",
+            "offsetMinutes": -20,
+            "procedure": "原料裁断と容器準備",
+            "checkpoints": [
+              "重量",
+              "容器洗浄",
+              "ラベル一致",
+              "外観",
+              "異常有無"
+            ],
+            "stepType": "material_prep",
+            "title": "原料準備",
+            "stepDescription": "抽出前に原料状態をそろえ、後工程のばらつきを減らす工程です。",
+            "instructions": [
+              "原料ラベル・ロット・採取日を確認し、対象バッチと一致することを確認する。",
+              "異物を除去し、必要な前処理（洗浄・裁断）を行う。",
+              "秤を調整して原料重量を測定し記録する。",
+              "外観を確認し、異常有無を記録する。"
+            ],
+            "normalSigns": [
+              "ラベル一致",
+              "異臭なし",
+              "外観が想定範囲"
+            ],
+            "abnormalSigns": [
+              "変色",
+              "異臭",
+              "異物混入",
+              "重量差過大"
+            ],
+            "cautionNotes": [
+              "濡れた器具を使わない",
+              "取り違え防止のため再確認する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "原料確認",
+              "原料重量",
+              "外観確認",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "原料確認・重量・外観が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "変色",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "soak_start",
+            "name": "漬け込み開始",
+            "eventType": "point",
+            "offsetMinutes": 0,
+            "procedure": "原料と溶媒を投入し密閉",
+            "checkpoints": [
+              "比率",
+              "密閉",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "漬け込み開始",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "soak_main",
+            "name": "漬け込み期間",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "冷暗所で静置",
+            "checkpoints": [
+              "遮光",
+              "温度",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "漬け込み期間",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "filter",
+            "name": "濾過",
+            "eventType": "point",
+            "offsetMinutes": 10080,
+            "procedure": "濾過し抽出液を回収",
+            "checkpoints": [
+              "沈殿",
+              "濁り",
+              "濾過完了有無",
+              "残渣",
+              "回収量"
+            ],
+            "stepType": "filtration",
+            "title": "濾過",
+            "stepDescription": "残渣を除去し、回収液の状態を一定化する工程です。",
+            "instructions": [
+              "ろ紙・器具・受器を準備し、ラベルを確認する。",
+              "濁りと残渣の状態を確認しながらろ過する。",
+              "ろ過完了後の回収量を測定し記録する。"
+            ],
+            "normalSigns": [
+              "ろ過後の濁りが減少",
+              "残渣量が想定範囲"
+            ],
+            "abnormalSigns": [
+              "強い濁り残り",
+              "ろ過停止",
+              "回収量急減"
+            ],
+            "cautionNotes": [
+              "ろ紙詰まり時は無理に圧をかけない"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "濾過完了有無",
+              "濁り",
+              "残渣",
+              "回収量"
+            ],
+            "optionalLogs": [
+              "異常有無",
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "濾過完了と回収量が記録済み"
+            ],
+            "abnormalityOptions": [
+              "白濁",
+              "沈殿過多",
+              "分離",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "evaluate",
+            "name": "評価",
+            "eventType": "point",
+            "offsetMinutes": 10110,
+            "procedure": "香りと色を評価",
+            "checkpoints": [
+              "香り",
+              "色",
+              "香り評価",
+              "透明度",
+              "異常有無"
+            ],
+            "stepType": "mid_evaluation",
+            "title": "評価",
+            "stepDescription": "完成前の品質傾向を確認し、次工程の判断に使う工程です。",
+            "instructions": [
+              "評価前に容器状態とラベルを確認する。",
+              "香り・色・透明度を一定条件で評価して記録する。",
+              "異常有無と次工程で確認すべき点を記録する。"
+            ],
+            "normalSigns": [
+              "香りの厚みが増加",
+              "急な白濁なし",
+              "透明度が想定範囲"
+            ],
+            "abnormalSigns": [
+              "香り劣化",
+              "急な白濁",
+              "強い分離",
+              "異臭"
+            ],
+            "cautionNotes": [
+              "評価条件を毎回そろえる",
+              "主観語だけでなく具体語で記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "香り評価",
+              "色",
+              "透明度",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "評価3項目と異常有無が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": {
+          "unit": "day",
+          "every": 1
+        },
+        "stirFrequency": {
+          "unit": "day",
+          "every": 1
+        }
+      },
+      {
+        "presetId": "tnk_14d",
+        "presetName": "14日",
+        "description": "標準チンキ",
+        "defaultRatio": "1:8",
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 20160
+        },
+        "allowedSolvents": [
+          "ethanol",
+          "anhydrous_ethanol",
+          "ethanol_water_mix"
+        ],
+        "defaultStorageProfile": "cool_dark_bottle",
+        "steps": [
+          {
+            "stepId": "prep",
+            "name": "原料準備",
+            "eventType": "point",
+            "offsetMinutes": -20,
+            "procedure": "原料準備",
+            "checkpoints": [
+              "重量",
+              "状態",
+              "ラベル一致",
+              "外観",
+              "異常有無"
+            ],
+            "stepType": "material_prep",
+            "title": "原料準備",
+            "stepDescription": "抽出前に原料状態をそろえ、後工程のばらつきを減らす工程です。",
+            "instructions": [
+              "原料ラベル・ロット・採取日を確認し、対象バッチと一致することを確認する。",
+              "異物を除去し、必要な前処理（洗浄・裁断）を行う。",
+              "秤を調整して原料重量を測定し記録する。",
+              "外観を確認し、異常有無を記録する。"
+            ],
+            "normalSigns": [
+              "ラベル一致",
+              "異臭なし",
+              "外観が想定範囲"
+            ],
+            "abnormalSigns": [
+              "変色",
+              "異臭",
+              "異物混入",
+              "重量差過大"
+            ],
+            "cautionNotes": [
+              "濡れた器具を使わない",
+              "取り違え防止のため再確認する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "原料確認",
+              "原料重量",
+              "外観確認",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "原料確認・重量・外観が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "変色",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "soak_start",
+            "name": "漬け込み開始",
+            "eventType": "point",
+            "offsetMinutes": 0,
+            "procedure": "投入・密閉",
+            "checkpoints": [
+              "比率",
+              "容器密閉",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "漬け込み開始",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "soak_main",
+            "name": "漬け込み期間",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "14日静置",
+            "checkpoints": [
+              "遮光",
+              "日次確認",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "漬け込み期間",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "mid_evaluate",
+            "name": "中間評価",
+            "eventType": "point",
+            "offsetMinutes": 10080,
+            "procedure": "中間品質確認",
+            "checkpoints": [
+              "香り変化",
+              "沈殿",
+              "香り評価",
+              "色",
+              "透明度",
+              "異常有無"
+            ],
+            "stepType": "mid_evaluation",
+            "title": "中間評価",
+            "stepDescription": "完成前の品質傾向を確認し、次工程の判断に使う工程です。",
+            "instructions": [
+              "評価前に容器状態とラベルを確認する。",
+              "香り・色・透明度を一定条件で評価して記録する。",
+              "異常有無と次工程で確認すべき点を記録する。"
+            ],
+            "normalSigns": [
+              "香りの厚みが増加",
+              "急な白濁なし",
+              "透明度が想定範囲"
+            ],
+            "abnormalSigns": [
+              "香り劣化",
+              "急な白濁",
+              "強い分離",
+              "異臭"
+            ],
+            "cautionNotes": [
+              "評価条件を毎回そろえる",
+              "主観語だけでなく具体語で記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "香り評価",
+              "色",
+              "透明度",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "評価3項目と異常有無が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "filter",
+            "name": "濾過",
+            "eventType": "point",
+            "offsetMinutes": 20160,
+            "procedure": "濾過・回収",
+            "checkpoints": [
+              "濾過速度",
+              "回収量",
+              "濾過完了有無",
+              "濁り",
+              "残渣"
+            ],
+            "stepType": "filtration",
+            "title": "濾過",
+            "stepDescription": "残渣を除去し、回収液の状態を一定化する工程です。",
+            "instructions": [
+              "ろ紙・器具・受器を準備し、ラベルを確認する。",
+              "濁りと残渣の状態を確認しながらろ過する。",
+              "ろ過完了後の回収量を測定し記録する。"
+            ],
+            "normalSigns": [
+              "ろ過後の濁りが減少",
+              "残渣量が想定範囲"
+            ],
+            "abnormalSigns": [
+              "強い濁り残り",
+              "ろ過停止",
+              "回収量急減"
+            ],
+            "cautionNotes": [
+              "ろ紙詰まり時は無理に圧をかけない"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "濾過完了有無",
+              "濁り",
+              "残渣",
+              "回収量"
+            ],
+            "optionalLogs": [
+              "異常有無",
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "濾過完了と回収量が記録済み"
+            ],
+            "abnormalityOptions": [
+              "白濁",
+              "沈殿過多",
+              "分離",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": {
+          "unit": "day",
+          "every": 1
+        },
+        "stirFrequency": {
+          "unit": "day",
+          "every": 2
+        }
+      },
+      {
+        "presetId": "tnk_21d",
+        "presetName": "21日",
+        "description": "長期チンキ",
+        "defaultRatio": "1:10",
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 30240
+        },
+        "allowedSolvents": [
+          "ethanol",
+          "anhydrous_ethanol",
+          "ethanol_water_mix"
+        ],
+        "defaultStorageProfile": "room_shielded_sealed",
+        "steps": [
+          {
+            "stepId": "soak_start",
+            "name": "漬け込み開始",
+            "eventType": "point",
+            "offsetMinutes": 0,
+            "procedure": "投入開始",
+            "checkpoints": [
+              "記録",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "漬け込み開始",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "soak_main",
+            "name": "漬け込み期間",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "21日静置",
+            "checkpoints": [
+              "温度",
+              "遮光",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "漬け込み期間",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "mid_evaluate",
+            "name": "中間評価",
+            "eventType": "point",
+            "offsetMinutes": 15120,
+            "procedure": "中間官能評価",
+            "checkpoints": [
+              "色",
+              "香り",
+              "香り評価",
+              "透明度",
+              "異常有無"
+            ],
+            "stepType": "mid_evaluation",
+            "title": "中間評価",
+            "stepDescription": "完成前の品質傾向を確認し、次工程の判断に使う工程です。",
+            "instructions": [
+              "評価前に容器状態とラベルを確認する。",
+              "香り・色・透明度を一定条件で評価して記録する。",
+              "異常有無と次工程で確認すべき点を記録する。"
+            ],
+            "normalSigns": [
+              "香りの厚みが増加",
+              "急な白濁なし",
+              "透明度が想定範囲"
+            ],
+            "abnormalSigns": [
+              "香り劣化",
+              "急な白濁",
+              "強い分離",
+              "異臭"
+            ],
+            "cautionNotes": [
+              "評価条件を毎回そろえる",
+              "主観語だけでなく具体語で記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "香り評価",
+              "色",
+              "透明度",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "評価3項目と異常有無が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "filter",
+            "name": "濾過",
+            "eventType": "point",
+            "offsetMinutes": 30240,
+            "procedure": "濾過回収",
+            "checkpoints": [
+              "沈殿",
+              "回収率",
+              "濾過完了有無",
+              "濁り",
+              "残渣",
+              "回収量"
+            ],
+            "stepType": "filtration",
+            "title": "濾過",
+            "stepDescription": "残渣を除去し、回収液の状態を一定化する工程です。",
+            "instructions": [
+              "ろ紙・器具・受器を準備し、ラベルを確認する。",
+              "濁りと残渣の状態を確認しながらろ過する。",
+              "ろ過完了後の回収量を測定し記録する。"
+            ],
+            "normalSigns": [
+              "ろ過後の濁りが減少",
+              "残渣量が想定範囲"
+            ],
+            "abnormalSigns": [
+              "強い濁り残り",
+              "ろ過停止",
+              "回収量急減"
+            ],
+            "cautionNotes": [
+              "ろ紙詰まり時は無理に圧をかけない"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "濾過完了有無",
+              "濁り",
+              "残渣",
+              "回収量"
+            ],
+            "optionalLogs": [
+              "異常有無",
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "濾過完了と回収量が記録済み"
+            ],
+            "abnormalityOptions": [
+              "白濁",
+              "沈殿過多",
+              "分離",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": {
+          "unit": "day",
+          "every": 2
+        },
+        "stirFrequency": {
+          "unit": "day",
+          "every": 1
+        }
+      },
+      {
+        "presetId": "tnk_30d",
+        "presetName": "30日",
+        "description": "超長期チンキ",
+        "defaultRatio": "1:12",
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 43200
+        },
+        "allowedSolvents": [
+          "anhydrous_ethanol",
+          "ethanol",
+          "ethanol_water_mix"
+        ],
+        "defaultStorageProfile": "cool_refrigerated_sealed",
+        "steps": [
+          {
+            "stepId": "soak_start",
+            "name": "漬け込み開始",
+            "eventType": "point",
+            "offsetMinutes": 0,
+            "procedure": "長期抽出開始",
+            "checkpoints": [
+              "密閉",
+              "遮光",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "漬け込み開始",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "soak_main",
+            "name": "漬け込み期間",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "30日静置",
+            "checkpoints": [
+              "定期確認",
+              "攪拌",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "漬け込み期間",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "mid_evaluate",
+            "name": "中間評価",
+            "eventType": "point",
+            "offsetMinutes": 21600,
+            "procedure": "中間評価",
+            "checkpoints": [
+              "香り",
+              "色",
+              "香り評価",
+              "透明度",
+              "異常有無"
+            ],
+            "stepType": "mid_evaluation",
+            "title": "中間評価",
+            "stepDescription": "完成前の品質傾向を確認し、次工程の判断に使う工程です。",
+            "instructions": [
+              "評価前に容器状態とラベルを確認する。",
+              "香り・色・透明度を一定条件で評価して記録する。",
+              "異常有無と次工程で確認すべき点を記録する。"
+            ],
+            "normalSigns": [
+              "香りの厚みが増加",
+              "急な白濁なし",
+              "透明度が想定範囲"
+            ],
+            "abnormalSigns": [
+              "香り劣化",
+              "急な白濁",
+              "強い分離",
+              "異臭"
+            ],
+            "cautionNotes": [
+              "評価条件を毎回そろえる",
+              "主観語だけでなく具体語で記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "香り評価",
+              "色",
+              "透明度",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "評価3項目と異常有無が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "filter",
+            "name": "濾過",
+            "eventType": "point",
+            "offsetMinutes": 43200,
+            "procedure": "濾過回収",
+            "checkpoints": [
+              "濾過完了",
+              "回収量",
+              "濾過完了有無",
+              "濁り",
+              "残渣"
+            ],
+            "stepType": "filtration",
+            "title": "濾過",
+            "stepDescription": "残渣を除去し、回収液の状態を一定化する工程です。",
+            "instructions": [
+              "ろ紙・器具・受器を準備し、ラベルを確認する。",
+              "濁りと残渣の状態を確認しながらろ過する。",
+              "ろ過完了後の回収量を測定し記録する。"
+            ],
+            "normalSigns": [
+              "ろ過後の濁りが減少",
+              "残渣量が想定範囲"
+            ],
+            "abnormalSigns": [
+              "強い濁り残り",
+              "ろ過停止",
+              "回収量急減"
+            ],
+            "cautionNotes": [
+              "ろ紙詰まり時は無理に圧をかけない"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "濾過完了有無",
+              "濁り",
+              "残渣",
+              "回収量"
+            ],
+            "optionalLogs": [
+              "異常有無",
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "濾過完了と回収量が記録済み"
+            ],
+            "abnormalityOptions": [
+              "白濁",
+              "沈殿過多",
+              "分離",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": {
+          "unit": "day",
+          "every": 1
+        },
+        "stirFrequency": {
+          "unit": "day",
+          "every": 1
+        }
+      }
+    ],
+    "solvent_extraction": [
+      {
+        "presetId": "sol_short",
+        "presetName": "短時間抽出",
+        "description": "短時間接触",
+        "defaultRatio": "1:4",
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 1440
+        },
+        "allowedSolvents": [
+          "hexane",
+          "ethyl_acetate",
+          "acetone"
+        ],
+        "defaultStorageProfile": "cool_dark_bottle",
+        "steps": [
+          {
+            "stepId": "prep",
+            "name": "原料準備",
+            "eventType": "point",
+            "offsetMinutes": -30,
+            "procedure": "乾燥状態確認",
+            "checkpoints": [
+              "水分",
+              "重量",
+              "ラベル一致",
+              "外観",
+              "異常有無"
+            ],
+            "stepType": "material_prep",
+            "title": "原料準備",
+            "stepDescription": "抽出前に原料状態をそろえ、後工程のばらつきを減らす工程です。",
+            "instructions": [
+              "原料ラベル・ロット・採取日を確認し、対象バッチと一致することを確認する。",
+              "異物を除去し、必要な前処理（洗浄・裁断）を行う。",
+              "秤を調整して原料重量を測定し記録する。",
+              "外観を確認し、異常有無を記録する。"
+            ],
+            "normalSigns": [
+              "ラベル一致",
+              "異臭なし",
+              "外観が想定範囲"
+            ],
+            "abnormalSigns": [
+              "変色",
+              "異臭",
+              "異物混入",
+              "重量差過大"
+            ],
+            "cautionNotes": [
+              "濡れた器具を使わない",
+              "取り違え防止のため再確認する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "原料確認",
+              "原料重量",
+              "外観確認",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "原料確認・重量・外観が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "変色",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "contact_main",
+            "name": "溶媒接触時間",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "1日抽出",
+            "checkpoints": [
+              "密閉",
+              "温度",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "溶媒接触時間",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "separate",
+            "name": "分液",
+            "eventType": "point",
+            "offsetMinutes": 1440,
+            "procedure": "分液して抽出液回収",
+            "checkpoints": [
+              "層分離",
+              "濁り",
+              "分液完了有無",
+              "分離状態",
+              "回収量",
+              "外観"
+            ],
+            "stepType": "separation",
+            "title": "分液",
+            "stepDescription": "相分離状態を確認して目的層を正しく回収する工程です。",
+            "instructions": [
+              "分液器具とラベルを確認する。",
+              "層境界を確認し、不要層の混入を避けて分液する。",
+              "回収量と分離状態を記録する。"
+            ],
+            "normalSigns": [
+              "層境界が明瞭",
+              "回収液の混入が少ない"
+            ],
+            "abnormalSigns": [
+              "層境界不明瞭",
+              "強い乳化",
+              "回収量の急減"
+            ],
+            "cautionNotes": [
+              "急速に排液しない",
+              "境界付近は少量ずつ分ける"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "分液完了有無",
+              "分離状態",
+              "回収量",
+              "外観"
+            ],
+            "optionalLogs": [
+              "異常有無",
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "分液完了と回収量が記録済み"
+            ],
+            "abnormalityOptions": [
+              "分離",
+              "白濁",
+              "液漏れ",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": {
+          "unit": "day",
+          "every": 1
+        },
+        "stirFrequency": null
+      },
+      {
+        "presetId": "sol_standard",
+        "presetName": "標準抽出",
+        "description": "標準2日抽出",
+        "defaultRatio": "1:6",
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 2880
+        },
+        "allowedSolvents": [
+          "hexane",
+          "ethyl_acetate",
+          "acetone",
+          "ethanol"
+        ],
+        "defaultStorageProfile": "room_shielded_sealed",
+        "steps": [
+          {
+            "stepId": "contact_main",
+            "name": "溶媒接触時間",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "2日抽出",
+            "checkpoints": [
+              "温度",
+              "密閉",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "溶媒接触時間",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "mix_bottle",
+            "name": "瓶を混ぜる",
+            "eventType": "point",
+            "offsetMinutes": 720,
+            "procedure": "穏やかに混和",
+            "checkpoints": [
+              "漏れなし",
+              "均一化",
+              "攪拌実施有無",
+              "液の状態",
+              "香りの印象",
+              "異常有無"
+            ],
+            "stepType": "stir_mix",
+            "title": "瓶を混ぜる",
+            "stepDescription": "抽出ムラを減らすため、過度な攪拌を避けつつ均一化する工程です。",
+            "instructions": [
+              "瓶のラベルと密閉状態、液漏れを確認する。",
+              "瓶をゆっくり上下に3〜5回反転し、強く振らない。",
+              "混合後に液状態と香りを確認し記録する。"
+            ],
+            "normalSigns": [
+              "軽い沈殿が均一化",
+              "液漏れなし"
+            ],
+            "abnormalSigns": [
+              "泡立ち過多",
+              "白濁",
+              "液漏れ",
+              "異臭"
+            ],
+            "cautionNotes": [
+              "強振とうしない",
+              "液漏れ時は即停止して記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "攪拌実施有無",
+              "液の状態",
+              "香りの印象",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "攪拌実施有無と観察結果が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "液漏れ",
+              "分離",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "separate",
+            "name": "分液",
+            "eventType": "point",
+            "offsetMinutes": 2880,
+            "procedure": "分液",
+            "checkpoints": [
+              "層確認",
+              "回収量",
+              "分液完了有無",
+              "分離状態",
+              "外観"
+            ],
+            "stepType": "separation",
+            "title": "分液",
+            "stepDescription": "相分離状態を確認して目的層を正しく回収する工程です。",
+            "instructions": [
+              "分液器具とラベルを確認する。",
+              "層境界を確認し、不要層の混入を避けて分液する。",
+              "回収量と分離状態を記録する。"
+            ],
+            "normalSigns": [
+              "層境界が明瞭",
+              "回収液の混入が少ない"
+            ],
+            "abnormalSigns": [
+              "層境界不明瞭",
+              "強い乳化",
+              "回収量の急減"
+            ],
+            "cautionNotes": [
+              "急速に排液しない",
+              "境界付近は少量ずつ分ける"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "分液完了有無",
+              "分離状態",
+              "回収量",
+              "外観"
+            ],
+            "optionalLogs": [
+              "異常有無",
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "分液完了と回収量が記録済み"
+            ],
+            "abnormalityOptions": [
+              "分離",
+              "白濁",
+              "液漏れ",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": {
+          "unit": "day",
+          "every": 1
+        },
+        "stirFrequency": {
+          "unit": "day",
+          "every": 2
+        }
+      },
+      {
+        "presetId": "sol_long",
+        "presetName": "長時間抽出",
+        "description": "長時間接触抽出",
+        "defaultRatio": "1:8",
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 5760
+        },
+        "allowedSolvents": [
+          "hexane",
+          "ethyl_acetate",
+          "ethanol"
+        ],
+        "defaultStorageProfile": "cool_dark_bottle",
+        "steps": [
+          {
+            "stepId": "contact_main",
+            "name": "溶媒接触時間",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "4日抽出",
+            "checkpoints": [
+              "温度",
+              "遮光",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "溶媒接触時間",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "mid_check",
+            "name": "確認",
+            "eventType": "point",
+            "offsetMinutes": 2880,
+            "procedure": "中間確認",
+            "checkpoints": [
+              "濁り",
+              "色",
+              "香り",
+              "温度",
+              "異常有無"
+            ],
+            "stepType": "check",
+            "title": "確認",
+            "stepDescription": "抽出中の変化を観察し、異常の早期検出と条件比較に使う工程です。",
+            "instructions": [
+              "容器ラベルと対象バッチを確認する。",
+              "液色・濁り・沈殿を目視で確認し記録する。",
+              "香りと温度を確認し、前回との差を記録する。"
+            ],
+            "normalSigns": [
+              "軽い沈殿のみ",
+              "強い異臭なし",
+              "温度が想定範囲"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "急激な分離",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "確認条件を毎回そろえる",
+              "開栓時間を短くする"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "色",
+              "香り",
+              "温度",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "観察項目が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "filter",
+            "name": "濾過",
+            "eventType": "point",
+            "offsetMinutes": 5760,
+            "procedure": "濾過と回収",
+            "checkpoints": [
+              "残渣",
+              "回収",
+              "濾過完了有無",
+              "濁り",
+              "回収量"
+            ],
+            "stepType": "filtration",
+            "title": "濾過",
+            "stepDescription": "残渣を除去し、回収液の状態を一定化する工程です。",
+            "instructions": [
+              "ろ紙・器具・受器を準備し、ラベルを確認する。",
+              "濁りと残渣の状態を確認しながらろ過する。",
+              "ろ過完了後の回収量を測定し記録する。"
+            ],
+            "normalSigns": [
+              "ろ過後の濁りが減少",
+              "残渣量が想定範囲"
+            ],
+            "abnormalSigns": [
+              "強い濁り残り",
+              "ろ過停止",
+              "回収量急減"
+            ],
+            "cautionNotes": [
+              "ろ紙詰まり時は無理に圧をかけない"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "濾過完了有無",
+              "濁り",
+              "残渣",
+              "回収量"
+            ],
+            "optionalLogs": [
+              "異常有無",
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "濾過完了と回収量が記録済み"
+            ],
+            "abnormalityOptions": [
+              "白濁",
+              "沈殿過多",
+              "分離",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": {
+          "unit": "day",
+          "every": 1
+        },
+        "stirFrequency": {
+          "unit": "day",
+          "every": 1
+        }
+      },
+      {
+        "presetId": "sol_cold",
+        "presetName": "低温静置抽出",
+        "description": "低温管理で静置抽出",
+        "defaultRatio": "1:7",
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 4320
+        },
+        "allowedSolvents": [
+          "ethanol",
+          "ethyl_acetate"
+        ],
+        "defaultStorageProfile": "cool_refrigerated_sealed",
+        "steps": [
+          {
+            "stepId": "contact_main",
+            "name": "溶媒接触時間",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "低温静置",
+            "checkpoints": [
+              "冷蔵維持",
+              "密閉",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "溶媒接触時間",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "evaluate",
+            "name": "評価",
+            "eventType": "point",
+            "offsetMinutes": 2160,
+            "procedure": "中間評価",
+            "checkpoints": [
+              "香り",
+              "析出",
+              "香り評価",
+              "色",
+              "透明度",
+              "異常有無"
+            ],
+            "stepType": "mid_evaluation",
+            "title": "評価",
+            "stepDescription": "完成前の品質傾向を確認し、次工程の判断に使う工程です。",
+            "instructions": [
+              "評価前に容器状態とラベルを確認する。",
+              "香り・色・透明度を一定条件で評価して記録する。",
+              "異常有無と次工程で確認すべき点を記録する。"
+            ],
+            "normalSigns": [
+              "香りの厚みが増加",
+              "急な白濁なし",
+              "透明度が想定範囲"
+            ],
+            "abnormalSigns": [
+              "香り劣化",
+              "急な白濁",
+              "強い分離",
+              "異臭"
+            ],
+            "cautionNotes": [
+              "評価条件を毎回そろえる",
+              "主観語だけでなく具体語で記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "香り評価",
+              "色",
+              "透明度",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "評価3項目と異常有無が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "separate",
+            "name": "分液",
+            "eventType": "point",
+            "offsetMinutes": 4320,
+            "procedure": "分液回収",
+            "checkpoints": [
+              "温度",
+              "分液完了",
+              "分液完了有無",
+              "分離状態",
+              "回収量",
+              "外観"
+            ],
+            "stepType": "separation",
+            "title": "分液",
+            "stepDescription": "相分離状態を確認して目的層を正しく回収する工程です。",
+            "instructions": [
+              "分液器具とラベルを確認する。",
+              "層境界を確認し、不要層の混入を避けて分液する。",
+              "回収量と分離状態を記録する。"
+            ],
+            "normalSigns": [
+              "層境界が明瞭",
+              "回収液の混入が少ない"
+            ],
+            "abnormalSigns": [
+              "層境界不明瞭",
+              "強い乳化",
+              "回収量の急減"
+            ],
+            "cautionNotes": [
+              "急速に排液しない",
+              "境界付近は少量ずつ分ける"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "分液完了有無",
+              "分離状態",
+              "回収量",
+              "外観"
+            ],
+            "optionalLogs": [
+              "異常有無",
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "分液完了と回収量が記録済み"
+            ],
+            "abnormalityOptions": [
+              "分離",
+              "白濁",
+              "液漏れ",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": {
+          "unit": "day",
+          "every": 1
+        },
+        "stirFrequency": null
+      },
+      {
+        "presetId": "sol_stir",
+        "presetName": "攪拌あり抽出",
+        "description": "攪拌前提の抽出",
+        "defaultRatio": "1:6",
+        "durationRule": {
+          "type": "fixedMinutes",
+          "value": 2880
+        },
+        "allowedSolvents": [
+          "hexane",
+          "acetone",
+          "ethyl_acetate"
+        ],
+        "defaultStorageProfile": "room_shielded_sealed",
+        "steps": [
+          {
+            "stepId": "contact_main",
+            "name": "溶媒接触時間",
+            "eventType": "duration",
+            "offsetMinutes": 0,
+            "procedure": "攪拌条件で抽出",
+            "checkpoints": [
+              "初期条件",
+              "密閉",
+              "比率一致",
+              "密閉状態",
+              "初期状態",
+              "開始条件"
+            ],
+            "stepType": "extraction_start",
+            "title": "溶媒接触時間",
+            "stepDescription": "抽出開始時の初期条件を固定し、再現性を確保する工程です。",
+            "instructions": [
+              "原料量・溶媒量・比率がレシピと一致しているか確認する。",
+              "容器の密閉状態と液漏れがないことを確認する。",
+              "開始時の液色・香り・温度または開始条件を記録する。"
+            ],
+            "normalSigns": [
+              "液漏れなし",
+              "急な白濁なし",
+              "強い異臭なし"
+            ],
+            "abnormalSigns": [
+              "急な白濁",
+              "液漏れ",
+              "強い異臭",
+              "温度逸脱"
+            ],
+            "cautionNotes": [
+              "容器を強く振らない",
+              "開始直後の状態を必ず記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "初期状態",
+              "温度または開始条件",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "開始条件が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "分離",
+              "液漏れ",
+              "変色",
+              "温度異常",
+              "沈殿過多",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "stir",
+            "name": "攪拌",
+            "eventType": "point",
+            "offsetMinutes": 720,
+            "procedure": "設定回数攪拌",
+            "checkpoints": [
+              "攪拌回数",
+              "漏れなし",
+              "攪拌実施有無",
+              "液の状態",
+              "香りの印象",
+              "異常有無"
+            ],
+            "stepType": "stir_mix",
+            "title": "攪拌",
+            "stepDescription": "抽出ムラを減らすため、過度な攪拌を避けつつ均一化する工程です。",
+            "instructions": [
+              "瓶のラベルと密閉状態、液漏れを確認する。",
+              "瓶をゆっくり上下に3〜5回反転し、強く振らない。",
+              "混合後に液状態と香りを確認し記録する。"
+            ],
+            "normalSigns": [
+              "軽い沈殿が均一化",
+              "液漏れなし"
+            ],
+            "abnormalSigns": [
+              "泡立ち過多",
+              "白濁",
+              "液漏れ",
+              "異臭"
+            ],
+            "cautionNotes": [
+              "強振とうしない",
+              "液漏れ時は即停止して記録する"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "攪拌実施有無",
+              "液の状態",
+              "香りの印象",
+              "異常有無"
+            ],
+            "optionalLogs": [
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "攪拌実施有無と観察結果が記録済み"
+            ],
+            "abnormalityOptions": [
+              "異臭",
+              "白濁",
+              "液漏れ",
+              "分離",
+              "その他"
+            ]
+          },
+          {
+            "stepId": "separate",
+            "name": "分液",
+            "eventType": "point",
+            "offsetMinutes": 2880,
+            "procedure": "分液",
+            "checkpoints": [
+              "残渣",
+              "回収量",
+              "分液完了有無",
+              "分離状態",
+              "外観"
+            ],
+            "stepType": "separation",
+            "title": "分液",
+            "stepDescription": "相分離状態を確認して目的層を正しく回収する工程です。",
+            "instructions": [
+              "分液器具とラベルを確認する。",
+              "層境界を確認し、不要層の混入を避けて分液する。",
+              "回収量と分離状態を記録する。"
+            ],
+            "normalSigns": [
+              "層境界が明瞭",
+              "回収液の混入が少ない"
+            ],
+            "abnormalSigns": [
+              "層境界不明瞭",
+              "強い乳化",
+              "回収量の急減"
+            ],
+            "cautionNotes": [
+              "急速に排液しない",
+              "境界付近は少量ずつ分ける"
+            ],
+            "requiredLogs": [
+              "実施時刻",
+              "実施者",
+              "分液完了有無",
+              "分離状態",
+              "回収量",
+              "外観"
+            ],
+            "optionalLogs": [
+              "異常有無",
+              "異常種別"
+            ],
+            "completionCriteria": [
+              "分液完了と回収量が記録済み"
+            ],
+            "abnormalityOptions": [
+              "分離",
+              "白濁",
+              "液漏れ",
+              "その他"
+            ]
+          }
+        ],
+        "checkFrequency": {
+          "unit": "day",
+          "every": 2
+        },
+        "stirFrequency": {
+          "unit": "day",
+          "every": 1
+        }
+      }
+    ]
+  }
+}
